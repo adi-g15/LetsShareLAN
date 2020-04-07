@@ -1,5 +1,9 @@
 import requests
 
+#Credentials - I have hardcoded, since i didnt wanted a small script to ask every time, or to need another file for saving the credentials once asked
+user_name = ''
+pass_wd = ''
+
 login_url = "http://172.172.172.100:8090/httpclient.html"
 
 global login_session
@@ -13,15 +17,15 @@ def requests_login(action_val): #action_val=0 means login
 
     form_data = {
         "mode":"191",
-        "username":"190234",
-        "password":"Adi@15035",
+        "username":user_name,
+        "password":pass_wd,
         "a":"1581616003458",
         "producttype":"0"
         }
 
     logout_data = {
         "mode":"193",
-        "username":"190234",
+        "username":user_name,
         "a":"1581619053328",
         "producttype":"0"
         }
@@ -50,8 +54,8 @@ def selenium_login():
     def try_cred():
         global __userid
         global __passwd
-        __userid = "190234"
-        __passwd = "Adi@15035"
+        __userid = user_name
+        __passwd = pass_wd
 
     def get_cred():
         global __userid
