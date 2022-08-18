@@ -1,10 +1,19 @@
-use std::{fs, path::Path};
+use std::{
+    error, fs,
+    path::Path,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
-use rand::prelude::*;
+use debug::debugln;
 use dialoguer;
 use dotenv;
 use mysql::{self, prelude::Queryable, Conn, OptsBuilder};
+use rand::prelude::*;
+use reqwest::blocking::Client;
+use urlencoding::encode;
 use whoami;
+
+static BASE_URL: &str = "http://172.172.172.100:8090/";
 
 /*
  * To be able to use MariaDB/MySQL. You MUST have a .env file containing:
@@ -57,27 +66,99 @@ fn sql_get_credentials() -> Vec<(String, String)> {
 
     let mut conn = Conn::new(opts).expect(SQL_FAILED_ERROR_CONN);
 
-    conn.query_map(
-        "SELECT username, pwd FROM passwords",
-        |(username, pwd)| {
-            (username, pwd)
-        })
-        .expect(SQL_FAILED_ERROR_QUERY)
+    conn.query_map("SELECT username, pwd FROM passwords", |(username, pwd)| {
+        (username, pwd)
+    })
+    .expect(SQL_FAILED_ERROR_QUERY)
 }
 
-fn login_user(username: String, password: String) -> Result<(),()> {
-    println!("Logging in user: {}", username);
+/**
+ * @return Returns number of milliseconds since UNIX/ECMAScript epoch, ie. 1 Jan 1970
+ */
+fn get_milliseconds_since_epoch() -> u128 {
+    let now = SystemTime::now();
 
-    Ok(())
+    now.duration_since(UNIX_EPOCH)
+        .expect("Time went backwards :O")
+        .as_millis()
 }
 
-fn logout_user(username: String) -> Result<(),()> {
+/**
+ * Log in to the captive portal using the provided username and password
+ */
+fn login_user(username: String, password: String) -> Result<(), Box<dyn error::Error>> {
+    const FAILED_MESSAGE: &str = "Make sure your password is correct";
+
+    let login_url = BASE_URL.to_string() + "login.xml";
+
+    let millis = get_milliseconds_since_epoch();
+
+    /*
+     * Mode: 191 (for login), 193 (for logout)
+     * ProductType: 0 (desktop), 1 (iPhone/iPad), 2 (Android)
+     */
+    let query = format!(
+        "mode=191&username={}&password={}&a={}&producttype=0",
+        encode(username.as_str()),
+        encode(password.as_str()),
+        millis
+    );
+
+    let client = Client::new();
+
+    /* The headers are not required, but I am adding them just for possible stability later */
+    let res = client
+        .post(login_url)
+        .header("Content-Type", "application/x-www-form-urlencoded")
+        .header("Referer", BASE_URL)
+        .body(query)
+        .send()?;
+
+    debugln!("{:?}", res);
+
+    let response = res.text()?;
+    debugln!("{:?}", response);
+
+    if response.contains(FAILED_MESSAGE) {
+        Err("Failed to login")?
+    } else {
+        Ok(())
+    }
+}
+
+fn logout_user(username: String) -> Result<(), reqwest::Error> {
     println!("Logging out user: {}", username);
+    let logout_url = BASE_URL.to_string() + "logout.xml";
+
+    let millis = get_milliseconds_since_epoch();
+
+    /*
+     * Mode: 191 (for login), 193 (for logout)
+     * ProductType: 0 (desktop), 1 (iPhone/iPad), 2 (Android)
+     */
+    let query = format!(
+        "mode=193&username={}&a={}&producttype=0",
+        encode(username.as_str()),
+        millis
+    );
+
+    let client = Client::new();
+
+    /* The headers are not required, but I am adding them just for possible stability later */
+    let res = client
+        .post(logout_url)
+        .header("Content-Type", "application/x-www-form-urlencoded")
+        .header("Referer", BASE_URL)
+        .body(query)
+        .send()?;
+
+    debugln!("{:?}", res);
+    debugln!("{:?}", res.text());
 
     Ok(())
 }
 
-fn main() -> Result<(),()> {
+fn main() -> Result<(), Box<dyn error::Error>> {
     let args = std::env::args().collect::<Vec<_>>();
 
     if args.contains(&"--help".to_string()) {
@@ -93,9 +174,7 @@ fn main() -> Result<(),()> {
     let use_sql = !args.contains(&"--nosql".to_string());
 
     if should_logout {
-        println!("Logging out...");
-
-        let username = if Path::try_exists(&Path::new("/tmp/lsl.username")).is_ok() {
+        let username = if Path::try_exists(&Path::new("/tmp/lsl.username")).unwrap_or(false) {
             // Read username from /tmp/lsl.username
             fs::read_to_string("/tmp/lsl.username").unwrap()
         } else {
@@ -106,6 +185,7 @@ fn main() -> Result<(),()> {
         };
 
         logout_user(username)?;
+        return Ok(());
     }
 
     let mut credentials = if use_sql {
@@ -131,20 +211,19 @@ fn main() -> Result<(),()> {
 
     let mut connected = false;
     for cred in credentials {
-        println!("Trying to login with {}... ", cred.0);
+        print!("Trying to login with {}... ", cred.0);
 
         if login_user(cred.0, cred.1).is_ok() {
-            println!("Failed")
-        } else {
             println!("Succeeded");
             connected = true;
             break;
+        } else {
+            println!("Failed");
         }
     }
 
-    if ! connected {
-        println!("Failed to login. Please check the connection/credentials.");
-        return Err(());
+    if !connected {
+        Err("Failed to login. Please check the connection/credentials.")?;
     }
 
     Ok(())
