@@ -2,6 +2,10 @@
 
 ![LetsShareLAN](https://socialify.git.ci/adi-g15/LetsShareLAN/image?description=1&language=1&logo=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2Fthumb%2F2%2F20%2FRustacean-orig-noshadow.svg%2F200px-Rustacean-orig-noshadow.svg.png&name=1&owner=1&pattern=Circuit%20Board&theme=Dark)
 
+<div align="center">
+  <a href="https://github.com/adi-g15/LetsShareLAN/actions/workflows/rust.yml"><img alt="Build Status" src="https://github.com/adi-g15/LetsShareLAN/actions/workflows/rust.yml/badge.svg" /></a>
+</div>
+
 Earlier, the plan was for a GUI. This is a CLI for now.
 
 I use this mostly by **setting it to start automatically after boot**.

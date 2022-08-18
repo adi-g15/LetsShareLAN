@@ -12,3 +12,7 @@ New*
 
 /target
 .env
+
+# For makepkg
+letssharelan
+*.pkg.tar.zst
