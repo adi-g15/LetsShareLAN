@@ -1,7 +1,7 @@
 use std::{
-    error, fs,
-    path::Path,
-    time::{SystemTime, UNIX_EPOCH},
+    error, env::temp_dir,
+    fs, path::{Path, PathBuf},
+    time::{SystemTime, UNIX_EPOCH}, io::Write,
 };
 
 use debug::debugln;
@@ -14,6 +14,7 @@ use urlencoding::encode;
 use whoami;
 
 static BASE_URL: &str = "http://172.172.172.100:8090/";
+
 
 /*
  * To be able to use MariaDB/MySQL. You MUST have a .env file containing:
@@ -88,6 +89,12 @@ fn get_milliseconds_since_epoch() -> u128 {
  */
 fn login_user(username: String, password: String) -> Result<(), Box<dyn error::Error>> {
     const FAILED_MESSAGE: &str = "Make sure your password is correct";
+    let tmp_filepath: PathBuf = temp_dir().join("lsl.username");
+
+    if Path::exists(&tmp_filepath) {
+        let old_username = fs::read_to_string(&tmp_filepath).unwrap();
+        println!("WARN: Possibly already logged in with username={}", old_username);
+    }
 
     let login_url = BASE_URL.to_string() + "login.xml";
 
@@ -122,6 +129,12 @@ fn login_user(username: String, password: String) -> Result<(), Box<dyn error::E
     if response.contains(FAILED_MESSAGE) {
         Err("Failed to login")?
     } else {
+        // cache username to file
+        if Path::exists(&tmp_filepath) {
+            fs::remove_file(&tmp_filepath)?;
+        }
+        let mut file = fs::File::create(&tmp_filepath)?;
+        file.write(username.as_bytes())?;
         Ok(())
     }
 }
@@ -173,18 +186,23 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     let should_logout = args.contains(&"logout".to_string());
     let use_sql = !args.contains(&"--nosql".to_string());
 
+    let tmp_filepath: PathBuf = temp_dir().join("lsl.username");
     if should_logout {
-        let username = if Path::exists(&Path::new("/tmp/lsl.username")) {
-            // Read username from /tmp/lsl.username
-            fs::read_to_string("/tmp/lsl.username").unwrap()
+        let username = if Path::exists(&tmp_filepath) {
+            // Read username from tmp_filepath (eg. /tmp/lsl.username)
+            fs::read_to_string(tmp_filepath.to_str().unwrap()).unwrap()
         } else {
-            dialoguer::Input::new()
-                .with_prompt("Enter logged in username")
-                .interact()
-                .unwrap()
+            // empty username also works for logout in our captive portal
+            "".to_string()
         };
 
         logout_user(username)?;
+
+        // Remove when logged out
+        if Path::exists(&tmp_filepath) && fs::remove_file(&tmp_filepath).is_err() {
+            println!("WARN: Failed to remove {:?}", tmp_filepath.to_str());
+        }
+
         return Ok(());
     }
 
