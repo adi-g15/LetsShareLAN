@@ -187,8 +187,8 @@ fn main() -> Result<(), Box<dyn error::Error>> {
             // Read username from tmp_filepath (eg. /tmp/lsl.username)
             fs::read_to_string(tmp_filepath.to_str().unwrap()).unwrap()
         } else {
-            // empty username also works for logout in our captive portal
-            "".to_string()
+            // random username also works for logout in our captive portal
+            "111111".to_string()
         };
 
         logout_user(username)?;
