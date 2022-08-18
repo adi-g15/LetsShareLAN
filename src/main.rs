@@ -1,5 +1,6 @@
-use std::{io::stdin, os};
+use std::{fs, path::Path};
 
+use rand::prelude::*;
 use dialoguer;
 use dotenv;
 use mysql::{self, prelude::Queryable, Conn, OptsBuilder};
@@ -19,7 +20,7 @@ static SQL_FAILED_ERROR_CONN: &str =
 static SQL_FAILED_ERROR_QUERY: &str =
     "Failed quering SQL. If you don't need SQL, use --nosql flag.";
 
-fn sql_get_ids() -> Vec<(String, String)> {
+fn sql_get_credentials() -> Vec<(String, String)> {
     // Load environment variables from .env file
     dotenv::dotenv().ok();
 
@@ -64,15 +65,54 @@ fn sql_get_ids() -> Vec<(String, String)> {
         .expect(SQL_FAILED_ERROR_QUERY)
 }
 
-fn main() {
+fn login_user(username: String, password: String) -> Result<(),()> {
+    println!("Logging in user: {}", username);
+
+    Ok(())
+}
+
+fn logout_user(username: String) -> Result<(),()> {
+    println!("Logging out user: {}", username);
+
+    Ok(())
+}
+
+fn main() -> Result<(),()> {
     let args = std::env::args().collect::<Vec<_>>();
 
+    if args.contains(&"--help".to_string()) {
+        println!("Usage: lsl [login/logout] [--nosql]");
+        println!("\tlogin: [Default] Login with given/sql fetched credentials");
+        println!("\t\t--nosql: Don't use SQL (for getting login credentials)");
+        println!("\tlogout: Logout from the current session");
+
+        return Ok(());
+    }
+
+    let should_logout = args.contains(&"logout".to_string());
     let use_sql = !args.contains(&"--nosql".to_string());
 
-    let ids = if use_sql {
-        sql_get_ids()
+    if should_logout {
+        println!("Logging out...");
+
+        let username = if Path::try_exists(&Path::new("/tmp/lsl.username")).is_ok() {
+            // Read username from /tmp/lsl.username
+            fs::read_to_string("/tmp/lsl.username").unwrap()
+        } else {
+            dialoguer::Input::new()
+                .with_prompt("Enter logged in username")
+                .interact()
+                .unwrap()
+        };
+
+        logout_user(username)?;
+    }
+
+    let mut credentials = if use_sql {
+        sql_get_credentials()
     } else {
         println!("Read instructions at: https://github.com/adi-g15/LetsShareLAN");
+
         let username = dialoguer::Input::new()
             .with_prompt("Enter your NITP username: ")
             .interact_text()
@@ -85,5 +125,27 @@ fn main() {
         vec![(username, password)]
     };
 
-    println!("{:?}", ids);
+    // random shuffle credentials
+    let mut rng = thread_rng();
+    credentials.shuffle(&mut rng);
+
+    let mut connected = false;
+    for cred in credentials {
+        println!("Trying to login with {}... ", cred.0);
+
+        if login_user(cred.0, cred.1).is_ok() {
+            println!("Failed")
+        } else {
+            println!("Succeeded");
+            connected = true;
+            break;
+        }
+    }
+
+    if ! connected {
+        println!("Failed to login. Please check the connection/credentials.");
+        return Err(());
+    }
+
+    Ok(())
 }

@@ -674,6 +674,7 @@ dependencies = [
  "dialoguer",
  "dotenv",
  "mysql",
+ "rand",
  "whoami",
 ]
 
