@@ -174,7 +174,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     let use_sql = !args.contains(&"--nosql".to_string());
 
     if should_logout {
-        let username = if Path::try_exists(&Path::new("/tmp/lsl.username")).unwrap_or(false) {
+        let username = if Path::exists(&Path::new("/tmp/lsl.username")) {
             // Read username from /tmp/lsl.username
             fs::read_to_string("/tmp/lsl.username").unwrap()
         } else {
