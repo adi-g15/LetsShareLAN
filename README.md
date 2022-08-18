@@ -1,8 +1,42 @@
 # Let's Share LAN
 
-![LetsShareLAN](https://socialify.git.ci/adi-g15/LetsShareLAN/image?description=1&descriptionEditable=A%20simpler%20and%20wider%20way%20to%20log%20in%20the%20NITP%20LAN%2C%20with%20randomly%20chosen%20IDs%20to%20distribute%20unused%20data%20to%20those%20in%20need%20&font=Inter&language=1&name=1&owner=1&pattern=Circuit%20Board&theme=Dark)
+![LetsShareLAN](https://socialify.git.ci/adi-g15/LetsShareLAN/image?description=1&language=1&logo=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2Fthumb%2F2%2F20%2FRustacean-orig-noshadow.svg%2F200px-Rustacean-orig-noshadow.svg.png&name=1&owner=1&pattern=Circuit%20Board&theme=Dark)
 
-Earlier, the plan was for a GUI. I am Currently
+Earlier, the plan was for a GUI. This is a CLI for now.
+
+### PreRequisite
+
+Install rust from [here](https://rustup.rs).
+
+Then just clone this repo with git, and see [usage section](#usage)
+
+```sh
+cargo build
+```
+
+### Usage
+
+1. Logging in:
+
+By default it will fetch passwords from a MySQL database.
+
+So first see the .env_sample file, and create corresponding .env file.
+
+```sh
+cargo run
+```
+
+1.2. Login by manually entering username,password
+
+```sh
+cargo run -- --nosql
+```
+
+2. Logout:
+
+```sh
+cargo run -- logout
+```
 
 ### Idea
 
