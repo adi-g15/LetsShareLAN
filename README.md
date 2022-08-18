@@ -7,3 +7,8 @@ Earlier, the plan was for a GUI. I am Currently
 ### Idea
 
 There is a data limit I always exhausted, while many of my friends didn't, so I can use their IDs, this is my way to automate that :)
+
+> Note to self: Bhai kuchh aur bhi ideas the, jaise ye sb VPN/TOR ke through secure ho... pta nhi 1st yr me itna kyu aur kaise sochha, shabaas ! 😂
+>
+>               To see old code, see initial 2 commits. Back then, used selenium, and MANY good inferences
+

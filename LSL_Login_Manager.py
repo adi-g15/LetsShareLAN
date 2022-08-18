@@ -1,3 +1,5 @@
+# NOTE: CODE NOT IN USE. Leave this file for personal reasons. Do NOT Delete.
+
 import tkinter
 import requests
 

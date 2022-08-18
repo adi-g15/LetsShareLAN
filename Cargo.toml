@@ -1,0 +1,13 @@
+[package]
+name = "lsl"
+version = "0.1.0"
+edition = "2021"
+description = "A simpler and wider way to log in the NITP LAN, with randomly chosen IDs to distribute unused data to those in need "
+readme = "README.md"
+repository = "https://github.com/adi-g15/LetsShareLAN"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+clap = "3.2.17"
+clap_complete = "3.2.4"
