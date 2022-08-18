@@ -1,6 +1,6 @@
 # Maintainer: Aditya Gupta <me dot adityag15 at gmail dot com>
 pkgname=letssharelan-git
-pkgver=r13.bc33512
+pkgver=r14.2689bb6
 pkgrel=1
 pkgdesc="Automates logging in to the NITP LAN, with randomly chosen credentials"
 arch=('x86_64')

@@ -52,18 +52,13 @@ fn sql_get_credentials() -> Vec<(String, String)> {
     // Password can be None
     let sql_password = dotenv::var("SQL_PASSWORD").ok();
 
-    let db_name = match dotenv::var("DB_NAME") {
-        Ok(db) => Some(db),
-        Err(_) => {
-            println!("WARN: Using default database, as DB_NAME not provided");
-            None
-        }
-    };
+    let db_name = dotenv::var("DB_NAME")
+        .expect("DB_NAME environment variable is mandatory, and must contain the database name");
 
     let opts = OptsBuilder::new()
         .user(Some(sql_username))
         .pass(sql_password)
-        .db_name(db_name);
+        .db_name(Some(db_name));
 
     let mut conn = Conn::new(opts).expect(SQL_FAILED_ERROR_CONN);
 
