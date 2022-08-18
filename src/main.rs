@@ -1,3 +1,6 @@
+use std::{io::stdin, os};
+
+use dialoguer;
 use dotenv;
 use mysql::{self, prelude::Queryable, Conn, OptsBuilder};
 use whoami;
@@ -62,13 +65,24 @@ fn sql_get_ids() -> Vec<(String, String)> {
 }
 
 fn main() {
-    let use_sql = true;
+    let args = std::env::args().collect::<Vec<_>>();
+
+    let use_sql = !args.contains(&"--nosql".to_string());
 
     let ids = if use_sql {
         sql_get_ids()
     } else {
-        vec![]
-        // Use passed username password
+        println!("Read instructions at: https://github.com/adi-g15/LetsShareLAN");
+        let username = dialoguer::Input::new()
+            .with_prompt("Enter your NITP username: ")
+            .interact_text()
+            .unwrap();
+        let password = dialoguer::Password::new()
+            .with_prompt("Enter your NITP password: ")
+            .interact()
+            .unwrap();
+
+        vec![(username, password)]
     };
 
     println!("{:?}", ids);
