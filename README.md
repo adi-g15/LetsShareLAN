@@ -4,6 +4,8 @@
 
 Earlier, the plan was for a GUI. This is a CLI for now.
 
+I use this mostly by **setting it to start automatically after boot**.
+
 ### PreRequisite
 
 Install rust from [here](https://rustup.rs).
