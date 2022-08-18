@@ -11,3 +11,4 @@ New*
 # Added by cargo
 
 /target
+.env

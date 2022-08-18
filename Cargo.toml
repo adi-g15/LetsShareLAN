@@ -9,5 +9,6 @@ repository = "https://github.com/adi-g15/LetsShareLAN"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-clap = "3.2.17"
-clap_complete = "3.2.4"
+dotenv = "0.15.0"
+mysql = "22.2.0"
+whoami = "1.2.1"
