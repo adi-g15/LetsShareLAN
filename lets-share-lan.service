@@ -1,0 +1,15 @@
+[Unit]
+Description=Connect to NITP network with random credential
+Wants=network-online.target
+After=<xxxxx>.service
+StartLimitBurst=1
+
+[Service]
+Type=oneshot
+Restart=on-failure
+RestartSec=10s
+Environment="LD_LIBRARY_PATH=$HOME/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib" "SQL_USERNAME=<xxxxx>" "DB_NAME=<xxxxx>"
+ExecStart=/usr/bin/lsl
+
+[Install]
+WantedBy=default.target

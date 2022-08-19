@@ -8,7 +8,17 @@
 
 Earlier, the plan was for a GUI. This is a CLI for now.
 
-I use this mostly by **setting it to start automatically after boot**.
+> TIP:
+>
+> I use this mostly by **setting it to start automatically after boot**.
+>
+> Steps with systemd (linux):
+>
+> 1. First install this using `cargo install --root /usr --path . --no-track`. Or use the PKGBUILD file, if on Arch Linux.
+> 2. Copy lets-share-lan.service to ~/.local/share/systemd/user/lets-share-lan.service. EDIT the service file with correct environment variables, and in After="<xxxxx>", put either `mysql.service` or `mariadb.service`
+> 3. systemctl --user enable --now lets-share-lan
+>
+> Done... FORGET ABOUT LOGGING IN AGAIN MANUALLY :)
 
 ### PreRequisite
 
