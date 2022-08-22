@@ -38,6 +38,20 @@ By default it will fetch passwords from a MySQL database.
 
 So first see the .env_sample file, and create corresponding .env file.
 
+Ensure that your SQL server is running (mariadb, mysql, default port 3306). Create a database, and enter the name of database in the `DB_NAME` environment variable (or in .env), eg. `DB_NAME=wifi`.
+
+Then create a `passwords` table like this:
+
+```sql
+create database wifi;
+use wifi;
+
+create table passwords (username varchar(10), pwd varchar(50));
+
+% Now insert known credentials in this table, LetsShareLAN will then randomly chose among these each time
+insert into …
+```
+
 ```sh
 cargo run
 ```
