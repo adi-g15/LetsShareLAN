@@ -5,13 +5,10 @@ use std::{
 };
 
 use debug::debugln;
-use dialoguer;
-use dotenv;
 use mysql::{self, prelude::Queryable, Conn, OptsBuilder};
 use rand::prelude::*;
 use reqwest::blocking::Client;
 use urlencoding::encode;
-use whoami;
 
 // Put your college/company LAN login page URL
 static BASE_URL: &str = "http://172.172.172.100:8090/";
@@ -138,7 +135,7 @@ fn login_user(username: String, password: String) -> Result<(), Box<dyn error::E
             fs::remove_file(&tmp_filepath)?;
         }
         let mut file = fs::File::create(&tmp_filepath)?;
-        file.write(username.as_bytes())?;
+        file.write_all(username.as_bytes())?;
         Ok(())
     }
 }
