@@ -13,8 +13,8 @@ use reqwest::blocking::Client;
 use urlencoding::encode;
 use whoami;
 
+// Put your college/company LAN login page URL
 static BASE_URL: &str = "http://172.172.172.100:8090/";
-
 
 /*
  * To be able to use MariaDB/MySQL. You MUST have a .env file containing:
@@ -59,6 +59,15 @@ fn sql_get_credentials() -> Vec<(String, String)> {
         .user(Some(sql_username))
         .pass(sql_password)
         .db_name(Some(db_name));
+
+    const MARIADB_SOCKET_PATH: &str = "/run/mysqld/mysqld.sock";
+    let opts = if Path::exists(Path::new(MARIADB_SOCKET_PATH)) {
+        opts.prefer_socket(true)   // preferring sockets, since I use mariadb
+                                   // only on localhost and disabled networking
+            .socket(Some(MARIADB_SOCKET_PATH.to_string()))
+    } else {
+        opts
+    };
 
     let mut conn = Conn::new(opts).expect(SQL_FAILED_ERROR_CONN);
 
