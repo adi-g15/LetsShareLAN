@@ -10,6 +10,7 @@ Restart=on-failure
 RestartSec=10s
 Environment="LD_LIBRARY_PATH=$HOME/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib" "SQL_USERNAME=<xxxxx>" "DB_NAME=<xxxxx>"
 ExecStart=/usr/bin/lsl
+ExecStop=/usr/bin/lsl logout
 
 [Install]
 WantedBy=default.target
