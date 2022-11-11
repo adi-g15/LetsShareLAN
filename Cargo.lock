@@ -859,6 +859,7 @@ dependencies = [
  "dialoguer",
  "dotenv",
  "mysql",
+ "online",
  "rand",
  "reqwest",
  "urlencoding",
@@ -1073,6 +1074,12 @@ name = "once_cell"
 version = "1.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "074864da206b4973b84eb91683020dbefd6a8c3f0f38e054d93954e891935e4e"
+
+[[package]]
+name = "online"
+version = "4.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "92f3da77f57f551a8f50567bf3c2b2883716d7b1ded55ee3f5e0d1ad549df56b"
 
 [[package]]
 name = "openssl"

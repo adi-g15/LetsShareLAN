@@ -2,7 +2,7 @@ use std::{
     error, env::temp_dir,
     fs, path::{Path, PathBuf},
     time::{Duration, SystemTime, UNIX_EPOCH}, io::Write,
-    thread::sleep,
+    thread::sleep
 };
 
 use debug::debugln;
@@ -10,6 +10,7 @@ use mysql::{self, prelude::Queryable, Conn, OptsBuilder};
 use rand::prelude::*;
 use reqwest::blocking::Client;
 use urlencoding::encode;
+use online::check;
 
 // Put your college/company LAN login page URL
 static BASE_URL: &str = "http://172.172.172.100:8090/";
@@ -181,24 +182,32 @@ fn daemon(credentials: &mut Vec<(String,String)>) -> Result<(), Box<dyn error::E
         let mut rng = thread_rng();
         credentials.shuffle(&mut rng);
 
-        let mut connected = false;
+        let mut succeeded = false;
         for cred in credentials.iter() {
             print!("Trying to login with {}... ", cred.0);
 
             if login_user(&cred.0, &cred.1).is_ok() {
                 println!("Succeeded");
-                connected = true;
+                succeeded = true;
+                break;
             } else {
                 println!("Failed");
             }
         }
 
-        if !connected {
+        if !succeeded {
             Err("Failed to login. Please check the connection/credentials.")?;
+        } else {
+            // Sleep for 30s connection has succeeded, wait for some time before moving on
+            // code
+            sleep(Duration::from_secs(30));
         }
 
-        // sleep for 1 minute
-        sleep(Duration::from_secs(60));
+        // see, if we are connected, if so sleep for 5 minutes
+        while check(None).is_ok() {
+            println!("Already connected...");
+            sleep(Duration::from_secs(60*5));
+        }
     }
 }
 
