@@ -6,7 +6,13 @@
   <a href="https://github.com/adi-g15/LetsShareLAN/actions/workflows/rust.yml"><img alt="Build Status" src="https://github.com/adi-g15/LetsShareLAN/actions/workflows/rust.yml/badge.svg" /></a>
 </div>
 
-Earlier, the plan was for a GUI. This is a CLI for now.
+Command to automate logging in to captive portal.
+
+Currently supports 3 modes:
+1. SQL: Get credentials from a sql table (can be using UNIX socket, or using
+   URL)
+2. File: Read credentials from a passwords file at `$HOME/lsl.pwd`
+3. Manual: Ask user for login credentials
 
 > TIP:
 >
@@ -59,7 +65,20 @@ cargo run
 1.2. Login by manually entering username,password
 
 ```sh
-cargo run -- --nosql
+cargo run -- --manual
+```
+
+1.3. Login by using a passwords file in home directory (ie. `$HOME/lsl.pwd`)
+
+```sh
+cargo run -- --usefile
+```
+
+The file at `$HOME/lsl.pwd` should have content like this:
+
+```toml
+username = password
+complex-username = complex-password@123
 ```
 
 2. Logout:

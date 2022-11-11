@@ -1,7 +1,7 @@
 use std::{
     error, env::temp_dir,
     fs, path::{Path, PathBuf},
-    time::{SystemTime, UNIX_EPOCH}, io::Write,
+    time::{SystemTime, UNIX_EPOCH}, io::{Read, Write},
 };
 
 use debug::debugln;
@@ -9,6 +9,7 @@ use mysql::{self, prelude::Queryable, Conn, OptsBuilder};
 use rand::prelude::*;
 use reqwest::blocking::Client;
 use urlencoding::encode;
+use home::home_dir;
 
 // Put your college/company LAN login page URL
 static BASE_URL: &str = "http://172.172.172.100:8090/";
@@ -21,11 +22,11 @@ static BASE_URL: &str = "http://172.172.172.100:8090/";
  * */
 
 static SQL_FAILED_ERROR_ENV: &str =
-    "Failed to get environment variable. If you don't need SQL, use --nosql flag.";
+    "Failed to get environment variable. If you don't need SQL, use --manual or --usefile flag.";
 static SQL_FAILED_ERROR_CONN: &str =
-    "Failed connecting to SQL. If you don't need SQL, use --nosql flag.";
+    "Failed connecting to SQL. If you don't need SQL, use --manual or --usefile flag.";
 static SQL_FAILED_ERROR_QUERY: &str =
-    "Failed quering SQL. If you don't need SQL, use --nosql flag.";
+    "Failed quering SQL. If you don't need SQL, use --manual or --usefile flag.";
 
 fn sql_get_credentials() -> Vec<(String, String)> {
     // Load environment variables from .env file
@@ -176,16 +177,18 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     let args = std::env::args().collect::<Vec<_>>();
 
     if args.contains(&"--help".to_string()) {
-        println!("Usage: lsl [login/logout] [--nosql]");
+        println!("Usage: lsl [login/logout] [--ask/--usefile]");
         println!("\tlogin: [Default] Login with given/sql fetched credentials");
-        println!("\t\t--nosql: Don't use SQL (for getting login credentials)");
+        println!("\t\t--manual: Ask user for login credentials (No SQL)");
+        println!("\t\t--usefile: Use credentials from $HOME/lsl.toml (No SQL, Plaintext)");
         println!("\tlogout: Logout from the current session");
 
         return Ok(());
     }
 
     let should_logout = args.contains(&"logout".to_string());
-    let use_sql = !args.contains(&"--nosql".to_string());
+    let manual_cred = args.contains(&"--manual".to_string());
+    let use_file = args.contains(&"--usefile".to_string());
 
     let tmp_filepath: PathBuf = temp_dir().join("lsl.username");
     if should_logout {
@@ -207,9 +210,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
         return Ok(());
     }
 
-    let mut credentials = if use_sql {
-        sql_get_credentials()
-    } else {
+    let mut credentials = if manual_cred {
         println!("Read instructions at: https://github.com/adi-g15/LetsShareLAN");
 
         let username = dialoguer::Input::new()
@@ -222,6 +223,30 @@ fn main() -> Result<(), Box<dyn error::Error>> {
             .unwrap();
 
         vec![(username, password)]
+    } else if use_file {
+        // Read credentials from $HOME/lsl.toml
+        let cred_filepath = home_dir().expect("Could not get the HOME directory path.").join("lsl.toml");
+
+        // If `cred_filepath` doesn't exist, opening it will fail since it tries in read-only mode
+        let mut file = fs::File::open(&cred_filepath).expect(&format!("Could not open {}. Check kar le hai bhi ki nahi :)", cred_filepath.display()));
+
+        let mut contents = String::new();
+        file.read_to_string(&mut contents)?;
+
+        let mut credentials = Vec::new();
+        for line in contents.lines() {
+            if line.is_empty() { continue; }
+
+            let split = line.split_once('=').expect("Invalid credentials file format. Each line should be like \"username\" = \"password\"");
+            let username = split.0.trim().to_string();
+            let password = split.1.trim().to_string();
+
+            credentials.push((username, password));
+        }
+
+        credentials
+    } else {
+        sql_get_credentials()
     };
 
     // random shuffle credentials
