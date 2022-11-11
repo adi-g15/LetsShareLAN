@@ -11,6 +11,7 @@ use rand::prelude::*;
 use reqwest::blocking::Client;
 use urlencoding::encode;
 use online::check;
+use single_instance::SingleInstance;
 
 // Put your college/company LAN login page URL
 static BASE_URL: &str = "http://172.172.172.100:8090/";
@@ -92,6 +93,8 @@ fn get_milliseconds_since_epoch() -> u128 {
  */
 fn login_user(username: &str, password: &str) -> Result<(), Box<dyn error::Error>> {
     const FAILED_MESSAGE: &str = "Make sure your password is correct";
+    const DATA_EXCEEDED_MSG: &str = "data transfer has been exceeded";
+
     let tmp_filepath: PathBuf = temp_dir().join("lsl.username");
 
     if Path::exists(&tmp_filepath) {
@@ -131,6 +134,8 @@ fn login_user(username: &str, password: &str) -> Result<(), Box<dyn error::Error
 
     if response.contains(FAILED_MESSAGE) {
         Err("Failed to login")?
+    } else if response.contains(DATA_EXCEEDED_MSG) {
+        Err("Data limit exceeded")?
     } else {
         // cache username to file
         if Path::exists(&tmp_filepath) {
@@ -176,6 +181,9 @@ fn logout_user(username: String) -> Result<(), reqwest::Error> {
 
 // Main logic, ensures only one copy is running preferring the latest one
 fn daemon(credentials: &mut Vec<(String,String)>) -> Result<(), Box<dyn error::Error>> {
+    // Required for SingleInstance to create some socket etc
+    let mut single_instance = SingleInstance::new("lsl").unwrap();
+
     loop {
         println!("Trying again to connect...");
         // random shuffle credentials
@@ -203,12 +211,20 @@ fn daemon(credentials: &mut Vec<(String,String)>) -> Result<(), Box<dyn error::E
             sleep(Duration::from_secs(30));
         }
 
+        // refresh SingleInstance instance, or else it will keep using the state of initialisation
+        single_instance = SingleInstance::new("lsl").unwrap();
+
+        if !single_instance.is_single() {
+            println!("Another instance is already running, exiting...");
+            break Ok(());
+        }
+ 
         // see, if we are connected, if so sleep for 5 minutes
         while check(None).is_ok() {
             println!("Already connected...");
             sleep(Duration::from_secs(60*5));
         }
-    }
+   }
 }
 
 fn main() -> Result<(), Box<dyn error::Error>> {
