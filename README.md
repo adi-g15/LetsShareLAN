@@ -6,7 +6,7 @@
   <a href="https://github.com/adi-g15/LetsShareLAN/actions/workflows/rust.yml"><img alt="Build Status" src="https://github.com/adi-g15/LetsShareLAN/actions/workflows/rust.yml/badge.svg" /></a>
 </div>
 
-Command to automate logging in to captive portal.
+Command to automate logging in to captive portal. Version - 3.
 
 Currently supports 3 modes:
 1. SQL: Get credentials from a sql table (can be using UNIX socket, or using
