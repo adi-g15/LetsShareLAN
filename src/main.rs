@@ -1,7 +1,8 @@
 use std::{
     error, env::temp_dir,
     fs, path::{Path, PathBuf},
-    time::{SystemTime, UNIX_EPOCH}, io::Write,
+    time::{Duration, SystemTime, UNIX_EPOCH}, io::Write,
+    thread::sleep,
 };
 
 use debug::debugln;
@@ -88,7 +89,7 @@ fn get_milliseconds_since_epoch() -> u128 {
 /**
  * Log in to the captive portal using the provided username and password
  */
-fn login_user(username: String, password: String) -> Result<(), Box<dyn error::Error>> {
+fn login_user(username: &str, password: &str) -> Result<(), Box<dyn error::Error>> {
     const FAILED_MESSAGE: &str = "Make sure your password is correct";
     let tmp_filepath: PathBuf = temp_dir().join("lsl.username");
 
@@ -107,8 +108,8 @@ fn login_user(username: String, password: String) -> Result<(), Box<dyn error::E
      */
     let query = format!(
         "mode=191&username={}&password={}&a={}&producttype=0",
-        encode(username.as_str()),
-        encode(password.as_str()),
+        encode(username),
+        encode(password),
         millis
     );
 
@@ -172,6 +173,35 @@ fn logout_user(username: String) -> Result<(), reqwest::Error> {
     Ok(())
 }
 
+// Main logic, ensures only one copy is running preferring the latest one
+fn daemon(credentials: &mut Vec<(String,String)>) -> Result<(), Box<dyn error::Error>> {
+    loop {
+        println!("Trying again to connect...");
+        // random shuffle credentials
+        let mut rng = thread_rng();
+        credentials.shuffle(&mut rng);
+
+        let mut connected = false;
+        for cred in credentials.iter() {
+            print!("Trying to login with {}... ", cred.0);
+
+            if login_user(&cred.0, &cred.1).is_ok() {
+                println!("Succeeded");
+                connected = true;
+            } else {
+                println!("Failed");
+            }
+        }
+
+        if !connected {
+            Err("Failed to login. Please check the connection/credentials.")?;
+        }
+
+        // sleep for 1 minute
+        sleep(Duration::from_secs(60));
+    }
+}
+
 fn main() -> Result<(), Box<dyn error::Error>> {
     let args = std::env::args().collect::<Vec<_>>();
 
@@ -224,26 +254,5 @@ fn main() -> Result<(), Box<dyn error::Error>> {
         vec![(username, password)]
     };
 
-    // random shuffle credentials
-    let mut rng = thread_rng();
-    credentials.shuffle(&mut rng);
-
-    let mut connected = false;
-    for cred in credentials {
-        print!("Trying to login with {}... ", cred.0);
-
-        if login_user(cred.0, cred.1).is_ok() {
-            println!("Succeeded");
-            connected = true;
-            break;
-        } else {
-            println!("Failed");
-        }
-    }
-
-    if !connected {
-        Err("Failed to login. Please check the connection/credentials.")?;
-    }
-
-    Ok(())
+    daemon(&mut credentials)
 }
