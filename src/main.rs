@@ -290,20 +290,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
         return Ok(());
     }
 
-    let mut credentials = if manual_cred {
-        println!("Read instructions at: https://github.com/adi-g15/LetsShareLAN");
-
-        let username = dialoguer::Input::new()
-            .with_prompt("Enter your NITP username: ")
-            .interact_text()
-            .unwrap();
-        let password = dialoguer::Password::new()
-            .with_prompt("Enter your NITP password: ")
-            .interact()
-            .unwrap();
-
-        vec![(username, password)]
-    } else if use_file {
+    let mut credentials = if use_file {
         // Read credentials from $HOME/lsl.toml
         let cred_filepath = home_dir().expect("Could not get the HOME directory path.").join("lsl.toml");
 
@@ -326,7 +313,19 @@ fn main() -> Result<(), Box<dyn error::Error>> {
 
         credentials
     } else {
-        sql_get_credentials()
+        // @adig Set manual input as default behaviour in this variant
+        println!("Read instructions at: https://github.com/adi-g15/LetsShareLAN");
+
+        let username = dialoguer::Input::new()
+            .with_prompt("Enter your NITP username: ")
+            .interact_text()
+            .unwrap();
+        let password = dialoguer::Password::new()
+            .with_prompt("Enter your NITP password: ")
+            .interact()
+            .unwrap();
+
+        vec![(username, password)]
     };
 
     daemon(&mut credentials)
