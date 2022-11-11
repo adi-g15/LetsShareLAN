@@ -268,7 +268,6 @@ fn main() -> Result<(), Box<dyn error::Error>> {
 
     let should_logout = args.contains(&"logout".to_string());
     let manual_cred = args.contains(&"--manual".to_string());
-    let use_file = args.contains(&"--usefile".to_string());
 
     let tmp_filepath: PathBuf = temp_dir().join("lsl.username");
     if should_logout {
@@ -303,7 +302,8 @@ fn main() -> Result<(), Box<dyn error::Error>> {
             .unwrap();
 
         vec![(username, password)]
-    } else if use_file {
+    } else {
+        // @adig using file will be default behaviour in this case
         // Read credentials from $HOME/lsl.toml
         let cred_filepath = home_dir().expect("Could not get the HOME directory path.").join("lsl.toml");
 
@@ -325,8 +325,6 @@ fn main() -> Result<(), Box<dyn error::Error>> {
         }
 
         credentials
-    } else {
-        sql_get_credentials()
     };
 
     daemon(&mut credentials)
