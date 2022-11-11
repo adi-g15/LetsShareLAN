@@ -2,7 +2,7 @@ use std::{
     error, env::temp_dir,
     fs, path::{Path, PathBuf},
     time::{Duration, SystemTime, UNIX_EPOCH}, io::{Read, Write},
-    thread::sleep
+    mem, thread::sleep
 };
 
 use debug::debugln;
@@ -212,6 +212,9 @@ fn daemon(credentials: &mut Vec<(String,String)>) -> Result<(), Box<dyn error::E
             sleep(Duration::from_secs(30));
         }
 
+        // call SingleInstance's destructor, so it can clean up sockets etc, before allocating next
+        // resource
+        mem::drop(single_instance);
         // refresh SingleInstance instance, or else it will keep using the state of initialisation
         single_instance = SingleInstance::new("lsl").unwrap();
 
