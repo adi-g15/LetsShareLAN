@@ -1,7 +1,7 @@
 use std::{
     error, env::temp_dir,
     fs, path::{Path, PathBuf},
-    time::{Duration, SystemTime, UNIX_EPOCH}, io::{Read, Write},
+    time::{Duration, SystemTime, UNIX_EPOCH, Instant}, io::{Read, Write},
     mem, thread::sleep
 };
 
@@ -186,10 +186,30 @@ fn daemon(credentials: &mut Vec<(String,String)>) -> Result<(), Box<dyn error::E
     #[allow(unused_assignments)]
     let mut single_instance = SingleInstance::new("lsl").unwrap();
 
+    const MAX_TRIES: i32 = 20;
+
+    let mut tries = MAX_TRIES;
+    let mut last_try = Instant::now();
     loop {
         // random shuffle credentials
         let mut rng = thread_rng();
         credentials.shuffle(&mut rng);
+
+        if tries == 0 {
+            println!("WARN: Tried {} times, sleeping for 20 minutes", MAX_TRIES);
+            sleep(Duration::from_secs(60*20));
+            tries = MAX_TRIES;
+        }
+
+        // If the last try was less than 10 seconds ago, count as a try
+        if Instant::now().duration_since(last_try).as_secs() < 10 {
+            tries = tries-1;
+        } else {
+            tries = MAX_TRIES;
+        }
+
+        // set last try
+        last_try = Instant::now();
 
         let mut succeeded = false;
         for cred in credentials.iter() {
@@ -205,7 +225,7 @@ fn daemon(credentials: &mut Vec<(String,String)>) -> Result<(), Box<dyn error::E
         }
 
         if !succeeded {
-            Err("Failed to login. Please check the connection/credentials.")?;
+            println!("WARN: Failed to login. Please check the connection/credentials.");
         } else {
             // Sleep for 30s connection has succeeded, wait for some time before moving on
             // code
